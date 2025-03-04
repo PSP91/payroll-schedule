@@ -1,9 +1,9 @@
-// Generate payroll schedule data with filtering for paydays on or after one week ago from March 4, 2025
+// Generate payroll schedule data with dynamic filtering for paydays on or after 7 days ago
 function generatePayrollSchedule() {
     const schedule = [];
-    const currentDate = new Date('2025-03-04'); // Current date (March 4, 2025)
+    const currentDate = new Date(); // Use current system date
     const oneWeekAgo = new Date(currentDate);
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before March 4, 2025 (February 25, 2025)
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before the current date
     const endDate = new Date('2027-12-31');
 
     let currentDateIterator = new Date('2025-04-21'); // Last date from the table (Week Starting)
@@ -24,7 +24,7 @@ function generatePayrollSchedule() {
             payDate.setDate(payDate.getDate() + 1);
         }
 
-        // Only include if Pay Date is on or after one week ago (February 25, 2025)
+        // Only include if Pay Date is on or after one week ago
         if (payDate >= oneWeekAgo) {
             schedule.push({
                 weekStarting: weekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
@@ -37,7 +37,7 @@ function generatePayrollSchedule() {
         currentDateIterator.setDate(currentDateIterator.getDate() + 7);
     }
 
-    // Add existing data from the table, but filter out old paydays (before February 25, 2025)
+    // Add existing data from the table, but filter out old paydays (before one week ago)
     const existingData = [
         { weekStarting: '18/11/2024', weekEnding: '01/12/2024', payDate: '12/12/2024' },
         { weekStarting: '02/12/2024', weekEnding: '15/12/2024', payDate: '24/12/2024' },
