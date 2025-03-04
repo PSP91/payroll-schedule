@@ -1,4 +1,4 @@
-// Generate payroll schedule data
+// Generate payroll schedule data (unchanged)
 function generatePayrollSchedule() {
     const schedule = [];
     const startDate = new Date('2025-04-21'); // Last date from the table (Week Starting)
@@ -51,7 +51,7 @@ function generatePayrollSchedule() {
     return [...existingData, ...schedule];
 }
 
-// Display schedule
+// Display schedule with colored text
 function displaySchedule(schedule, start = 0, limit = 10) {
     const scheduleDiv = document.getElementById('schedule');
     scheduleDiv.innerHTML = '';
@@ -61,9 +61,9 @@ function displaySchedule(schedule, start = 0, limit = 10) {
         const entry = schedule[i];
         scheduleDiv.innerHTML += `
             <div class="entry">
-                Week Starting: ${entry.weekStarting}<br>
-                Week Ending: ${entry.weekEnding}<br>
-                Pay Date: ${entry.payDate}
+                Week Starting: <span class="week-starting">${entry.weekStarting}</span><br>
+                Week Ending: <span class="week-ending">${entry.weekEnding}</span><br>
+                Pay Date: <span class="pay-date">${entry.payDate}</span>
             </div>
         `;
     }
@@ -79,8 +79,8 @@ function displaySchedule(schedule, start = 0, limit = 10) {
 // Theme toggle
 document.getElementById('themeToggle').addEventListener('click', () => {
     document.body.classList.toggle('light-theme');
-    const themeText = document.body.classList.contains('light-theme') ? 'Switch to Dark Theme' : 'Switch to Light Theme';
-    document.getElementById('themeToggle').textContent = themeText;
+    const isLight = document.body.classList.contains('light-theme');
+    document.getElementById('themeToggle').textContent = isLight ? '🌙' : '💡'; // Moon for dark, lightbulb for light
 });
 
 // Show more button
