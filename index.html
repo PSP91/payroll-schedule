@@ -5,14 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payroll Schedule</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Google Analytics (optional, for traffic stats; replace UA-XXXXX-Y with your ID) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-Y"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-XXXXX-Y');
+    </script>
 </head>
 <body>
     <div class="container">
         <h1>Payroll Schedule</h1>
-        <button id="themeToggle" aria-label="Toggle Theme">💡</button>
-        <div id="schedule"></div>
-        <button id="showMore" style="display: none;">Show More</button>
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search by date, month, or year...">
+            <input type="text" id="startDate" placeholder="Start Date (DD/MM/YYYY)">
+            <input type="text" id="endDate" placeholder="End Date (DD/MM/YYYY)">
+            <select id="dateFormat">
+                <option value="en-GB">DD/MM/YYYY (UK)</option>
+                <option value="en-US">MM/DD/YYYY (US)</option>
+            </select>
+            <button id="themeToggle" aria-label="Toggle Theme">💡</button>
+            <button id="enableNotifications" aria-label="Enable Payday Notifications">Enable Notifications</button>
+            <button id="exportPDF" aria-label="Export to PDF">Export to PDF</button>
+            <button id="exportCSV" aria-label="Export to CSV">Export to CSV</button>
+            <button id="exportICS" aria-label="Export to Calendar (.ics)">Export to Calendar</button>
+            <button id="feedback" aria-label="Send Feedback">Send Feedback</button>
+        </div>
+        <div id="schedule" role="list"></div>
+        <button id="showMore" style="display: none;" aria-label="Show More Entries">Show More</button>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
