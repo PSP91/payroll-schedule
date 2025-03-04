@@ -1,4 +1,4 @@
-// Generate payroll schedule data with filtering for current and future dates
+// Generate payroll schedule data with filtering for paydays on or after one week ago from March 4, 2025
 function generatePayrollSchedule() {
     const schedule = [];
     const currentDate = new Date('2025-03-04'); // Current date (March 4, 2025)
@@ -13,19 +13,19 @@ function generatePayrollSchedule() {
         // Week Starting (Monday)
         const weekStarting = new Date(currentDateIterator);
         
-        // Only include if Week Starting is on or after one week ago (February 25, 2025)
-        if (weekStarting >= oneWeekAgo) {
-            // Week Ending (Sunday, 6 days later)
-            const weekEnding = new Date(weekStarting);
-            weekEnding.setDate(weekEnding.getDate() + 6);
+        // Week Ending (Sunday, 6 days later)
+        const weekEnding = new Date(weekStarting);
+        weekEnding.setDate(weekEnding.getDate() + 6);
 
-            // Pay Date (Thursday, 14 days after Week Ending)
-            const payDate = new Date(weekEnding);
-            payDate.setDate(payDate.getDate() + 14);
-            while (payDate.getDay() !== 4) { // Ensure Pay Date is Thursday
-                payDate.setDate(payDate.getDate() + 1);
-            }
+        // Pay Date (Thursday, 14 days after Week Ending)
+        const payDate = new Date(weekEnding);
+        payDate.setDate(payDate.getDate() + 14);
+        while (payDate.getDay() !== 4) { // Ensure Pay Date is Thursday
+            payDate.setDate(payDate.getDate() + 1);
+        }
 
+        // Only include if Pay Date is on or after one week ago (February 25, 2025)
+        if (payDate >= oneWeekAgo) {
             schedule.push({
                 weekStarting: weekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
                 weekEnding: weekEnding.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
@@ -37,7 +37,7 @@ function generatePayrollSchedule() {
         currentDateIterator.setDate(currentDateIterator.getDate() + 7);
     }
 
-    // Add existing data from the table, but filter out old entries
+    // Add existing data from the table, but filter out old paydays (before February 25, 2025)
     const existingData = [
         { weekStarting: '18/11/2024', weekEnding: '01/12/2024', payDate: '12/12/2024' },
         { weekStarting: '02/12/2024', weekEnding: '15/12/2024', payDate: '24/12/2024' },
@@ -52,14 +52,14 @@ function generatePayrollSchedule() {
         { weekStarting: '07/04/2025', weekEnding: '20/04/2025', payDate: '01/05/2025' },
         { weekStarting: '21/04/2025', weekEnding: '04/05/2025', payDate: '15/05/2025' }
     ].filter(entry => {
-        const weekStart = new Date(entry.weekStarting.split('/').reverse().join('-')); // Convert DD/MM/YYYY to Date
-        return weekStart >= oneWeekAgo;
+        const payDate = new Date(entry.payDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to Date
+        return payDate >= oneWeekAgo;
     });
 
     return [...existingData, ...schedule];
 }
 
-// Display schedule
+// Display schedule (unchanged)
 function displaySchedule(schedule, start = 0, limit = 10) {
     const scheduleDiv = document.getElementById('schedule');
     scheduleDiv.innerHTML = '';
@@ -84,14 +84,14 @@ function displaySchedule(schedule, start = 0, limit = 10) {
     }
 }
 
-// Theme toggle
+// Theme toggle (unchanged)
 document.getElementById('themeToggle').addEventListener('click', () => {
     document.body.classList.toggle('light-theme');
     const isLight = document.body.classList.contains('light-theme');
     document.getElementById('themeToggle').textContent = isLight ? '🌙' : '💡'; // Moon for dark, lightbulb for light
 });
 
-// Show more button
+// Show more button (unchanged)
 document.getElementById('showMore').addEventListener('click', () => {
     let currentStart = parseInt(document.getElementById('schedule').dataset.start || 0);
     displaySchedule(schedule, currentStart + 10, 10);
