@@ -2,15 +2,17 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #1a1a1a;
-    color: #ffffff;
+    color: #ffffff; /* All text white by default */
     margin: 0;
     padding: 20px;
     transition: all 0.3s ease;
+    position: relative; /* For positioning the lightbulb */
 }
 
 .container {
     max-width: 600px;
     margin: 0 auto;
+    position: relative; /* Ensure container can contain positioned elements */
 }
 
 h1 {
@@ -34,6 +36,27 @@ button:hover {
     background-color: #357abd;
 }
 
+/* Style for the lightbulb theme toggle button */
+#themeToggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px; /* Adjust size for the icon */
+    height: 40px;
+    padding: 0;
+    font-size: 24px; /* Size of the lightbulb icon */
+    background-color: #4a90e2;
+    border-radius: 50%; /* Circular button for lightbulb */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#themeToggle:hover {
+    background-color: #357abd;
+}
+
+/* Color for schedule entries */
 .entry {
     background-color: #2d2d2d;
     padding: 15px;
@@ -42,16 +65,22 @@ button:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-#themeToggle {
-    width: auto;
-    margin: 10px auto;
-    display: block;
+.entry span.week-starting {
+    color: #007bff; /* Blue for Week Starting */
+}
+
+.entry span.week-ending {
+    color: #28a745; /* Green for Week Ending */
+}
+
+.entry span.pay-date {
+    color: #dc3545; /* Red for Pay Date */
 }
 
 /* Light Theme */
 body.light-theme {
     background-color: #ffffff;
-    color: #1a1a1a;
+    color: #1a1a1a; /* All text dark in light theme */
 }
 
 body.light-theme .entry {
@@ -62,12 +91,32 @@ body.light-theme h1 {
     color: #1a1a1a;
 }
 
+body.light-theme .entry span.week-starting {
+    color: #007bff; /* Blue for Week Starting (unchanged) */
+}
+
+body.light-theme .entry span.week-ending {
+    color: #28a745; /* Green for Week Ending (unchanged) */
+}
+
+body.light-theme .entry span.pay-date {
+    color: #dc3545; /* Red for Pay Date (unchanged) */
+}
+
 body.light-theme button {
     background-color: #4a90e2;
     color: white;
 }
 
 body.light-theme button:hover {
+    background-color: #357abd;
+}
+
+body.light-theme #themeToggle {
+    background-color: #4a90e2;
+}
+
+body.light-theme #themeToggle:hover {
     background-color: #357abd;
 }
 
@@ -84,5 +133,13 @@ body.light-theme button:hover {
 
     .entry {
         padding: 10px;
+    }
+
+    #themeToggle {
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
     }
 }
