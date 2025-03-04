@@ -1,38 +1,43 @@
-// Generate payroll schedule data (unchanged)
+// Generate payroll schedule data with filtering for current and future dates
 function generatePayrollSchedule() {
     const schedule = [];
-    const startDate = new Date('2025-04-21'); // Last date from the table (Week Starting)
+    const currentDate = new Date('2025-03-04'); // Current date (March 4, 2025)
+    const oneWeekAgo = new Date(currentDate);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before March 4, 2025 (February 25, 2025)
     const endDate = new Date('2027-12-31');
 
-    let currentDate = new Date(startDate);
-    currentDate.setDate(currentDate.getDate() + 7); // Move to next Monday
+    let currentDateIterator = new Date('2025-04-21'); // Last date from the table (Week Starting)
+    currentDateIterator.setDate(currentDateIterator.getDate() + 7); // Move to next Monday
 
-    while (currentDate <= endDate) {
+    while (currentDateIterator <= endDate) {
         // Week Starting (Monday)
-        const weekStarting = new Date(currentDate);
+        const weekStarting = new Date(currentDateIterator);
         
-        // Week Ending (Sunday, 6 days later)
-        const weekEnding = new Date(weekStarting);
-        weekEnding.setDate(weekEnding.getDate() + 6);
+        // Only include if Week Starting is on or after one week ago (February 25, 2025)
+        if (weekStarting >= oneWeekAgo) {
+            // Week Ending (Sunday, 6 days later)
+            const weekEnding = new Date(weekStarting);
+            weekEnding.setDate(weekEnding.getDate() + 6);
 
-        // Pay Date (Thursday, 14 days after Week Ending)
-        const payDate = new Date(weekEnding);
-        payDate.setDate(payDate.getDate() + 14);
-        while (payDate.getDay() !== 4) { // Ensure Pay Date is Thursday
-            payDate.setDate(payDate.getDate() + 1);
+            // Pay Date (Thursday, 14 days after Week Ending)
+            const payDate = new Date(weekEnding);
+            payDate.setDate(payDate.getDate() + 14);
+            while (payDate.getDay() !== 4) { // Ensure Pay Date is Thursday
+                payDate.setDate(payDate.getDate() + 1);
+            }
+
+            schedule.push({
+                weekStarting: weekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
+                weekEnding: weekEnding.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
+                payDate: payDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' })
+            });
         }
 
-        schedule.push({
-            weekStarting: weekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
-            weekEnding: weekEnding.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
-            payDate: payDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' })
-        });
-
         // Move to next Monday
-        currentDate.setDate(currentDate.getDate() + 7);
+        currentDateIterator.setDate(currentDateIterator.getDate() + 7);
     }
 
-    // Add existing data from the table (up to 21/04/2025)
+    // Add existing data from the table, but filter out old entries
     const existingData = [
         { weekStarting: '18/11/2024', weekEnding: '01/12/2024', payDate: '12/12/2024' },
         { weekStarting: '02/12/2024', weekEnding: '15/12/2024', payDate: '24/12/2024' },
@@ -46,12 +51,15 @@ function generatePayrollSchedule() {
         { weekStarting: '24/03/2025', weekEnding: '06/04/2025', payDate: '17/04/2025' },
         { weekStarting: '07/04/2025', weekEnding: '20/04/2025', payDate: '01/05/2025' },
         { weekStarting: '21/04/2025', weekEnding: '04/05/2025', payDate: '15/05/2025' }
-    ];
+    ].filter(entry => {
+        const weekStart = new Date(entry.weekStarting.split('/').reverse().join('-')); // Convert DD/MM/YYYY to Date
+        return weekStart >= oneWeekAgo;
+    });
 
     return [...existingData, ...schedule];
 }
 
-// Display schedule with colored text
+// Display schedule
 function displaySchedule(schedule, start = 0, limit = 10) {
     const scheduleDiv = document.getElementById('schedule');
     scheduleDiv.innerHTML = '';
