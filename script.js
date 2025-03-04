@@ -59,21 +59,47 @@ function generatePayrollSchedule() {
     return [...existingData, ...schedule];
 }
 
-// Display schedule (unchanged)
+// Format date based on locale
+function formatDate(dateStr, format = 'en-GB') {
+    const date = new Date(dateStr.split('/').reverse().join('-'));
+    return new Intl.DateTimeFormat(format).format(date);
+}
+
+// Display schedule with lazy loading
 function displaySchedule(schedule, start = 0, limit = 10) {
     const scheduleDiv = document.getElementById('schedule');
     scheduleDiv.innerHTML = '';
+    scheduleDiv.setAttribute('role', 'list');
 
     const end = Math.min(start + limit, schedule.length);
+    const currentFormat = document.getElementById('dateFormat').value;
+
     for (let i = start; i < end; i++) {
         const entry = schedule[i];
-        scheduleDiv.innerHTML += `
-            <div class="entry">
-                Week Starting: <span class="week-starting">${entry.weekStarting}</span><br>
-                Week Ending: <span class="week-ending">${entry.weekEnding}</span><br>
-                Pay Date: <span class="pay-date">${entry.payDate}</span>
-            </div>
+        const entryDiv = document.createElement('div');
+        entryDiv.className = 'entry';
+        entryDiv.setAttribute('role', 'listitem');
+        entryDiv.innerHTML = `
+            Week Starting: <span class="week-starting">${formatDate(entry.weekStarting, currentFormat)}</span><br>
+            Week Ending: <span class="week-ending">${formatDate(entry.weekEnding, currentFormat)}</span><br>
+            Pay Date: <span class="pay-date">${formatDate(entry.payDate, currentFormat)}</span>
         `;
+        if (i >= 10) entryDiv.classList.add('loading'); // Mark for lazy loading
+        scheduleDiv.appendChild(entryDiv);
+    }
+
+    // Lazy load entries beyond the first 10
+    if (start >= 10) {
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('loading');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        const loadingEntries = scheduleDiv.querySelectorAll('.loading');
+        loadingEntries.forEach(entry => observer.observe(entry));
     }
 
     const showMoreBtn = document.getElementById('showMore');
@@ -84,14 +110,132 @@ function displaySchedule(schedule, start = 0, limit = 10) {
     }
 }
 
-// Theme toggle (unchanged)
+// Search and filter
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    const currentFormat = document.getElementById('dateFormat').value;
+    const filteredSchedule = schedule.filter(entry => 
+        formatDate(entry.weekStarting, currentFormat).toLowerCase().includes(searchTerm) ||
+        formatDate(entry.weekEnding, currentFormat).toLowerCase().includes(searchTerm) ||
+        formatDate(entry.payDate, currentFormat).toLowerCase().includes(searchTerm)
+    );
+    displaySchedule(filteredSchedule, 0, 10);
+    document.getElementById('schedule').dataset.start = 0;
+});
+
+// Date range picker
+flatpickr("#startDate", { dateFormat: "d/m/Y" });
+flatpickr("#endDate", { dateFormat: "d/m/Y" });
+
+document.getElementById('startDate').addEventListener('change', filterByDateRange);
+document.getElementById('endDate').addEventListener('change', filterByDateRange);
+
+function filterByDateRange() {
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    const currentFormat = document.getElementById('dateFormat').value;
+    if (start && end) {
+        const startDate = new Date(start.split('/').reverse().join('-'));
+        const endDate = new Date(end.split('/').reverse().join('-'));
+        const filteredSchedule = schedule.filter(entry => {
+            const payDate = new Date(entry.payDate.split('/').reverse().join('-'));
+            return payDate >= startDate && payDate <= endDate;
+        });
+        displaySchedule(filteredSchedule, 0, 10);
+        document.getElementById('schedule').dataset.start = 0;
+    }
+}
+
+// Date format toggle
+document.getElementById('dateFormat').addEventListener('change', () => {
+    displaySchedule(schedule, 0, 10);
+    document.getElementById('schedule').dataset.start = 0;
+});
+
+// Theme toggle
 document.getElementById('themeToggle').addEventListener('click', () => {
     document.body.classList.toggle('light-theme');
     const isLight = document.body.classList.contains('light-theme');
     document.getElementById('themeToggle').textContent = isLight ? '🌙' : '💡'; // Moon for dark, lightbulb for light
 });
 
-// Show more button (unchanged)
+// Notifications
+document.getElementById('enableNotifications').addEventListener('click', () => {
+    if ('Notification' in window) {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                schedule.forEach(entry => {
+                    const payDate = new Date(entry.payDate.split('/').reverse().join('-'));
+                    const notifyDate = new Date(payDate);
+                    notifyDate.setDate(notifyDate.getDate() - 3); // Notify 3 days before payday
+                    const now = new Date();
+                    if (notifyDate > now) {
+                        setTimeout(() => {
+                            new Notification('Upcoming Payday', {
+                                body: `Payday on ${formatDate(entry.payDate, document.getElementById('dateFormat').value)} for week ${formatDate(entry.weekStarting, document.getElementById('dateFormat').value)} to ${formatDate(entry.weekEnding, document.getElementById('dateFormat').value)}`
+                            });
+                        }, notifyDate - now);
+                    }
+                });
+            }
+        });
+    } else {
+        alert('Notifications are not supported in this browser.');
+    }
+});
+
+// Export to PDF
+document.getElementById('exportPDF').addEventListener('click', () => {
+    const element = document.getElementById('schedule');
+    html2pdf().from(element).save('payroll_schedule.pdf');
+});
+
+// Export to CSV
+document.getElementById('exportCSV').addEventListener('click', () => {
+    const currentFormat = document.getElementById('dateFormat').value;
+    const csv = [
+        ['Week Starting', 'Week Ending', 'Pay Date'],
+        ...schedule.map(entry => [
+            formatDate(entry.weekStarting, currentFormat),
+            formatDate(entry.weekEnding, currentFormat),
+            formatDate(entry.payDate, currentFormat)
+        ])
+    ].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'payroll_schedule.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+});
+
+// Export to ICS (iCalendar)
+document.getElementById('exportICS').addEventListener('click', () => {
+    const currentFormat = document.getElementById('dateFormat').value;
+    let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\n';
+    schedule.forEach(entry => {
+        const payDate = new Date(entry.payDate.split('/').reverse().join('-'));
+        const payDateStr = payDate.toISOString().split('T')[0].replace(/-/g, '');
+        ics += `BEGIN:VEVENT\nDTSTART:${payDateStr}T090000Z\nSUMMARY:Payday - Week ${formatDate(entry.weekStarting, currentFormat)} to ${formatDate(entry.weekEnding, currentFormat)}\nDESCRIPTION:Week Starting: ${formatDate(entry.weekStarting, currentFormat)}\\nWeek Ending: ${formatDate(entry.weekEnding, currentFormat)}\nEND:VEVENT\n`;
+    });
+    ics += 'END:VCALENDAR';
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'payroll_schedule.ics';
+    a.click();
+    window.URL.revokeObjectURL(url);
+});
+
+// Feedback
+document.getElementById('feedback').addEventListener('click', () => {
+    window.open('https://formspree.io/your-form-endpoint', '_blank');
+    // Replace 'your-form-endpoint' with your Formspree or similar service endpoint
+});
+
+// Show more button with lazy loading
 document.getElementById('showMore').addEventListener('click', () => {
     let currentStart = parseInt(document.getElementById('schedule').dataset.start || 0);
     displaySchedule(schedule, currentStart + 10, 10);
