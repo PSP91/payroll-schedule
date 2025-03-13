@@ -59,12 +59,15 @@ function generatePayrollSchedule() {
     return [...existingData, ...schedule];
 }
 
-// Display schedule
-function displaySchedule(schedule, start = 0, limit = 10) {
+// Display schedule with pagination
+function displaySchedule(schedule, page = 1) {
     const scheduleDiv = document.getElementById('schedule');
     scheduleDiv.innerHTML = '';
 
+    const limit = 10;
+    const start = (page - 1) * limit;
     const end = Math.min(start + limit, schedule.length);
+
     for (let i = start; i < end; i++) {
         const entry = schedule[i];
         scheduleDiv.innerHTML += `
@@ -76,11 +79,26 @@ function displaySchedule(schedule, start = 0, limit = 10) {
         `;
     }
 
-    const showMoreBtn = document.getElementById('showMore');
-    if (end < schedule.length) {
-        showMoreBtn.style.display = 'block';
-    } else {
-        showMoreBtn.style.display = 'none';
+    // Update pagination
+    updatePagination(schedule, page);
+}
+
+// Update pagination controls
+function updatePagination(schedule, currentPage) {
+    const paginationDiv = document.getElementById('pagination');
+    paginationDiv.innerHTML = '';
+
+    const totalPages = Math.ceil(schedule.length / 10);
+    for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.addEventListener('click', () => {
+            displaySchedule(schedule, i);
+        });
+        if (i === currentPage) {
+            button.classList.add('current-page');
+        }
+        paginationDiv.appendChild(button);
     }
 }
 
@@ -91,13 +109,6 @@ document.getElementById('themeToggle').addEventListener('click', () => {
     document.getElementById('themeToggle').textContent = isLight ? '🌙' : '💡'; // Moon for dark, lightbulb for light
 });
 
-// Show more button
-document.getElementById('showMore').addEventListener('click', () => {
-    let currentStart = parseInt(document.getElementById('schedule').dataset.start || 0);
-    displaySchedule(schedule, currentStart + 10, 10);
-    document.getElementById('schedule').dataset.start = currentStart + 10;
-});
-
 // Initialize
 const schedule = generatePayrollSchedule();
-displaySchedule(schedule, 0, 10);
+displaySchedule(schedule, 1);
