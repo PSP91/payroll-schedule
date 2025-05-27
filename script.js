@@ -1,13 +1,13 @@
 // Generate payroll schedule data with dynamic filtering for paydays on or after 7 days ago
 function generatePayrollSchedule() {
     const schedule = [];
-    const currentDate = new Date(); // Use current system date
+    const currentDate = new Date(); // Current system date (May 27, 2025)
     const oneWeekAgo = new Date(currentDate);
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before the current date
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before the current date (May 20, 2025)
     const endDate = new Date('2027-12-31');
 
     let currentDateIterator = new Date('2025-04-21'); // Last date from the table (Week Starting)
-    currentDateIterator.setDate(currentDateIterator.getDate() + 7); // Move to next Monday
+    currentDateIterator.setDate(currentDateIterator.getDate() + 7); // Move to next Monday (April 28, 2025)
 
     while (currentDateIterator <= endDate) {
         // Week Starting (Monday)
