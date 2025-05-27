@@ -6,20 +6,26 @@ function generatePayrollSchedule() {
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // One week before the current date (May 20, 2025)
     const endDate = new Date('2027-12-31');
 
-    let currentDateIterator = new Date('2025-04-21'); // Last date from the table (Week Starting)
-    currentDateIterator.setDate(currentDateIterator.getDate() + 7); // Move to next Monday (April 28, 2025)
+    // Start from the last known Week Starting (April 21, 2025) and move forward biweekly
+    let currentWeekStarting = new Date('2025-04-21'); // Last Week Starting from the table
+    currentWeekStarting.setDate(currentWeekStarting.getDate() + 14); // Move to next Week Starting (May 5, 2025)
 
-    while (currentDateIterator <= endDate) {
-        // Week Starting (Monday)
-        const weekStarting = new Date(currentDateIterator);
-        
-        // Week Ending (Sunday, 6 days later)
-        const weekEnding = new Date(weekStarting);
-        weekEnding.setDate(weekEnding.getDate() + 6);
+    while (currentWeekStarting <= endDate) {
+        // Ensure Week Starting is a Monday
+        while (currentWeekStarting.getDay() !== 1) {
+            currentWeekStarting.setDate(currentWeekStarting.getDate() + 1);
+        }
 
-        // Pay Date (Thursday, 14 days after Week Ending)
+        // Week Ending (Sunday, 13 days after Week Starting)
+        const weekEnding = new Date(currentWeekStarting);
+        weekEnding.setDate(weekEnding.getDate() + 13);
+        while (weekEnding.getDay() !== 0) { // Ensure Week Ending is Sunday
+            weekEnding.setDate(weekEnding.getDate() - 1);
+        }
+
+        // Pay Date (Thursday, 11 days after Week Ending)
         const payDate = new Date(weekEnding);
-        payDate.setDate(payDate.getDate() + 14);
+        payDate.setDate(payDate.getDate() + 11);
         while (payDate.getDay() !== 4) { // Ensure Pay Date is Thursday
             payDate.setDate(payDate.getDate() + 1);
         }
@@ -27,14 +33,15 @@ function generatePayrollSchedule() {
         // Only include if Pay Date is on or after one week ago
         if (payDate >= oneWeekAgo) {
             schedule.push({
-                weekStarting: weekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
+                weekStarting: currentWeekStarting.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
                 weekEnding: weekEnding.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
-                payDate: payDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' })
+                payDate: payDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: 'numeric' }),
+                payDateObj: new Date(payDate) // Store for sorting
             });
         }
 
-        // Move to next Monday
-        currentDateIterator.setDate(currentDateIterator.getDate() + 7);
+        // Move to next Week Starting (biweekly)
+        currentWeekStarting.setDate(currentWeekStarting.getDate() + 14);
     }
 
     // Add existing data from the table, but filter out old paydays (before one week ago)
@@ -51,12 +58,20 @@ function generatePayrollSchedule() {
         { weekStarting: '24/03/2025', weekEnding: '06/04/2025', payDate: '17/04/2025' },
         { weekStarting: '07/04/2025', weekEnding: '20/04/2025', payDate: '01/05/2025' },
         { weekStarting: '21/04/2025', weekEnding: '04/05/2025', payDate: '15/05/2025' }
-    ].filter(entry => {
-        const payDate = new Date(entry.payDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to Date
-        return payDate >= oneWeekAgo;
-    });
+    ].map(entry => ({
+        ...entry,
+        payDateObj: new Date(entry.payDate.split('/').reverse().join('-')) // Add Date object for filtering and sorting
+    })).filter(entry => entry.payDateObj >= oneWeekAgo);
 
-    return [...existingData, ...schedule];
+    // Combine and sort by Pay Date
+    const combinedSchedule = [...existingData, ...schedule].sort((a, b) => a.payDateObj - b.payDateObj);
+
+    // Remove payDateObj from final output to keep display clean
+    return combinedSchedule.map(({ weekStarting, weekEnding, payDate }) => ({
+        weekStarting,
+        weekEnding,
+        payDate
+    }));
 }
 
 // Display schedule with pagination
